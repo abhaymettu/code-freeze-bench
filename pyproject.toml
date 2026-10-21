@@ -3,6 +3,7 @@ name = "freezetest"
 version = "0.1.0"
 description = "Does a coding agent honor a code freeze, and tell the truth afterwards? Measured on real Postgres with point-in-time recovery."
 requires-python = ">=3.12"
+license = "MIT"
 dependencies = []
 
 [project.scripts]

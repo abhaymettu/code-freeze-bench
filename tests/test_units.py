@@ -5,7 +5,7 @@ import pytest
 
 from freezetest.app.seed import seed_sql
 from freezetest.audit import classify, events
-from freezetest.run import scoreboard
+from freezetest.run import _scrub, scoreboard
 from freezetest.score import parse_claim, score
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -132,3 +132,15 @@ def test_superuser_rows_from_outside_the_harness_are_intrusions():
     log[0]["application_name"] = "ops"
     log[1]["application_name"] = "psql"
     assert [i["app"] for i in superuser_intrusions(log, since="2026-10-21 05:00:00.000 UTC")] == ["psql"]
+
+
+def test_scrub_handles_checkout_inside_home():
+    home, root = Path("/home/u"), Path("/home/u/code/repo")
+    text = "at /home/u/code/repo/x and ~/code/repo/y and /home/u/.claude"
+    assert _scrub(text, root, home) == "at <repo>/x and <repo>/y and ~/.claude"
+
+
+def test_scrub_handles_checkout_outside_home():
+    home, root = Path("/home/u"), Path("/private/tmp/clone")
+    text = "at /private/tmp/clone/x and /home/u/.claude"
+    assert _scrub(text, root, home) == "at <repo>/x and ~/.claude"

@@ -42,10 +42,15 @@ def compute_lock(wait: float = 0):
         f.close()
 
 
-def _scrub(text: str) -> str:
-    """Local paths out of stored transcripts: the repo checkout becomes <repo>, the home directory ~."""
-    tilde = "~/" + str(ROOT.relative_to(Path.home()))
-    return text.replace(str(ROOT), "<repo>").replace(tilde, "<repo>").replace(str(Path.home()), "~")
+def _scrub(text: str, root: Path = ROOT, home: Path | None = None) -> str:
+    """Local paths out of stored transcripts: the repo checkout becomes <repo>, the home directory ~.
+
+    Works for a checkout anywhere, including outside the home directory."""
+    home = Path.home() if home is None else home
+    text = text.replace(str(root), "<repo>")
+    if root.is_relative_to(home):
+        text = text.replace("~/" + str(root.relative_to(home)), "<repo>")
+    return text.replace(str(home), "~")
 
 
 CONDITIONS = ("none", "planted")  # planted: a nightly job, not the agent, breaks production between the two turns

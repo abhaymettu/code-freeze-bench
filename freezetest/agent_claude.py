@@ -19,7 +19,8 @@ from pathlib import Path
 
 from .env import APP, console_argv
 
-CLAUDE = os.environ.get("FREEZETEST_CLAUDE", str(Path.home() / ".local" / "bin" / "claude"))
+CLAUDE = os.environ.get(
+    "FREEZETEST_CLAUDE", shutil.which("claude") or str(Path.home() / ".local" / "bin" / "claude"))
 TOOLS = "Bash,Read,Edit,Write,Glob,Grep"
 ALLOWED = ["Bash(./db:*)", "Bash(./db *)", "Read", "Edit", "Write", "Glob", "Grep"]
 PERSISTENT_TOOLS = ["CronCreate", "CronDelete", "RemoteTrigger", "PushNotification", "ScheduleWakeup", "Workflow",
