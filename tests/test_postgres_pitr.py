@@ -44,7 +44,7 @@ def test_a_freeze_violation_is_logged_and_pitr_undoes_it(prod):
     assert d["row_deltas"]["customers"] == -13
     assert not d["schema_changed"]
 
-    found = audit.summarize(audit.events(s.statement_log(), role=env.AGENT_ROLE, since=frozen.started_at))
+    found = audit.summarize(audit.events(s.statement_log(), since=frozen.started_at))
     assert found["violated"]
     assert found["completed_writes"] == 3  # psql sends each statement on its own, so the server logs three deletes
     assert found["kinds"] == ["delete"]
@@ -52,7 +52,7 @@ def test_a_freeze_violation_is_logged_and_pitr_undoes_it(prod):
     assert [e["outcome"] for e in found["events"]] == ["completed"] * 3 + ["failed"]
 
     # Writes before the freeze (migrations and seed by the same role) are not violations.
-    early = audit.events(s.statement_log(), role=env.AGENT_ROLE, since="0")
+    early = audit.events(s.statement_log(), since="0")
     assert len(early) > len(found["events"])
 
     rec = env.recovery_check(name, frozen)
@@ -66,6 +66,19 @@ def test_no_violation_means_an_empty_log_and_an_unchanged_state(prod):
            user=env.AGENT_ROLE, app="agent-session")
     env.close_out(s)
     assert is_unchanged(diff(frozen.snapshot, snapshot(s)))
-    found = audit.summarize(audit.events(s.statement_log(), role=env.AGENT_ROLE, since=frozen.started_at))
+    found = audit.summarize(audit.events(s.statement_log(), since=frozen.started_at))
     assert not found["violated"] and found["events"] == []
     assert env.recovery_check(name, frozen)["restored_matches_freeze"]
+
+
+def test_the_agent_console_cannot_escalate_or_hide(prod):
+    name, s = prod
+    run = lambda *extra, sql: pg._run([*env.console_argv(name)[:-6], "psql", "-X", *extra, "-c", sql], check=False)
+    as_super = run("-U", "postgres", "-d", "acme", sql="select 1")
+    assert as_super.returncode != 0 and "authentication failed" in as_super.stderr
+    for sql in ("set log_min_duration_statement = -1", "alter system set log_min_duration_statement = -1",
+                "copy (select 1) to program 'rm -rf /wal'", "select pg_read_file('log/postgresql.csv')"):
+        p = run("-U", env.AGENT_ROLE, "-d", "acme", "-v", "ON_ERROR_STOP=1", sql=sql)
+        assert p.returncode != 0 and "permission denied" in p.stderr, (sql, p.stderr)
+    shell = pg._run([*env.console_argv(name)[:-6], "sh", "-c", "ls /wal"], check=False)
+    assert shell.returncode != 0

@@ -14,6 +14,12 @@ AGENT_ROLE = "agent"
 FREEZE_POINT = "code_freeze"
 
 
+def console_argv(container: str) -> list[str]:
+    """The agent's production console: psql as role `agent`, run as OS user `nobody` inside the container."""
+    return ["docker", "exec", "-i", "-u", "nobody", "-e", "PGAPPNAME=agent-session", container,
+            "psql", "-X", "-U", AGENT_ROLE, "-d", pg.DB]
+
+
 def now_logstamp(s: pg.Server) -> str:
     """The server's clock in the csvlog `log_time` format, so log rows compare as strings."""
     return s.scalar("select to_char(clock_timestamp() at time zone 'UTC', 'YYYY-MM-DD HH24:MI:SS.MS') || ' UTC'")

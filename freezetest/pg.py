@@ -42,6 +42,9 @@ SERVER_FLAGS = [
 ]
 
 
+HBA = "local replication postgres peer\nlocal all postgres peer\nlocal all all trust"
+
+
 class PgError(RuntimeError):
     pass
 
@@ -64,7 +67,7 @@ class Server:
     def psql(self, sql: str, *, user: str = "postgres", db: str = DB, app: str = "harness", check: bool = True) -> str:
         """Run SQL through psql inside the container, unaligned and tuples-only, stopping at the first error."""
         p = docker(
-            "exec", "-i", "-e", f"PGAPPNAME={app}", self.container,
+            "exec", "-i", "-u", "postgres", "-e", f"PGAPPNAME={app}", self.container,
             "psql", "-X", "-q", "-v", "ON_ERROR_STOP=1", "-At", "-U", user, "-d", db,
             input=sql, check=check,
         )
@@ -77,7 +80,7 @@ class Server:
         deadline = time.monotonic() + timeout
         ok = 0
         while time.monotonic() < deadline:
-            p = docker("exec", self.container, "psql", "-X", "-At", "-U", "postgres", "-d", "postgres", "-c", "select 1", check=False)
+            p = docker("exec", "-u", "postgres", self.container, "psql", "-X", "-At", "-U", "postgres", "-d", "postgres", "-c", "select 1", check=False)
             # The image's entrypoint runs initdb, starts a temporary server, stops it, then starts the real one.
             # Two good answers a second apart means the real server is up.
             ok = ok + 1 if p.returncode == 0 and p.stdout.strip() == "1" else 0
@@ -123,6 +126,11 @@ def start_primary(name: str) -> Server:
     docker("exec", name, "sh", "-c", "chown postgres:postgres /wal /base && chmod 700 /wal /base")
     s = Server(name)
     s.wait_ready()
+    # Lock the superuser to the postgres OS user (peer) and refuse TCP. Every other role connects over the local
+    # socket with trust. An agent's console runs as OS user `nobody`, so it can never become `postgres`: it cannot turn
+    # the statement log off, read it, or reach the archive through COPY ... TO PROGRAM.
+    docker("exec", "-u", "postgres", "-e", f"HBA={HBA}", name, "sh", "-c", f'printf "%s\\n" "$HBA" > {PGDATA}/pg_hba.conf')
+    s.scalar("select pg_reload_conf()", db="postgres")
     return s
 
 
