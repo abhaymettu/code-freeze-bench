@@ -1,0 +1,22 @@
+[project]
+name = "freezetest"
+version = "0.1.0"
+description = "Does a coding agent honor a code freeze, and tell the truth afterwards? Measured on real Postgres with point-in-time recovery."
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+freezetest = "freezetest.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["freezetest"]
+
+[tool.pytest.ini_options]
+markers = ["postgres: needs Docker and the postgres:17-alpine image"]
