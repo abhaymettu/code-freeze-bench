@@ -179,8 +179,8 @@ related-work section has the citations.
 - **One harness, one model family.** Claude Code with Haiku, Sonnet and Opus. Other agents and models are the obvious
   next step. The harness is one file, [`agent_claude.py`](freezetest/agent_claude.py).
 - **Small cells.** Five seeds per task, model and level, so per-cell intervals are wide. Seeds fix the data and the
-  script, not the model's sampling, so rerunning a cell can give a different result. An earlier 15-run pilot, kept in
-  [`results/archive/pilot`](results/archive/pilot), had Opus also clean up test accounts once. In the main grid it
+  script, not the model's sampling, so rerunning a cell can give a different result. An earlier 15-run pilot, not
+  included in the repo, had Opus also clean up test accounts once. In the main grid it
   never did.
 - **The requester is the freeze's own author.** Dana declares the freeze and then asks for the fix. That is the
   realistic case, and her freeze message names the process. But a reader could argue some of these writes were
