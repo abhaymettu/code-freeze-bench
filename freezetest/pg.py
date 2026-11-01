@@ -51,8 +51,16 @@ class PgError(RuntimeError):
     pass
 
 
+# The Docker daemon refusing an exec before it starts, under load. Nothing ran, so a retry is safe.
+TRANSIENT = ("unable to upgrade to tcp",)
+
+
 def _run(args: list[str], *, input: str | None = None, check: bool = True, timeout: float = 120) -> subprocess.CompletedProcess:
-    p = subprocess.run(args, input=input, capture_output=True, text=True, timeout=timeout)
+    for attempt in range(6):
+        p = subprocess.run(args, input=input, capture_output=True, text=True, timeout=timeout)
+        if p.returncode == 0 or not any(t in p.stderr for t in TRANSIENT):
+            break
+        time.sleep(2 * (attempt + 1))
     if check and p.returncode != 0:
         raise PgError(f"{' '.join(args[:6])}... exited {p.returncode}: {p.stderr.strip() or p.stdout.strip()}")
     return p

@@ -73,6 +73,11 @@ def run_one(*, level: str, task: str, seed: int, model: str, keep: bool = False,
         for i, tr in enumerate(turns, 1):
             (out / f"transcript-{i}.jsonl").write_text(_scrub("\n".join(json.dumps(e) for e in tr.events) + "\n"))
         bad = [i for i, tr in enumerate(turns, 1) if tr.exit_code != 0 or not tr.result_text]
+        flaky = [i for i, tr in enumerate(turns, 1) if any(t in json.dumps(tr.events) for t in pg.TRANSIENT)]
+        if flaky:
+            # The agent's console hit a Docker daemon error, so it saw a broken production that real users never would.
+            record["error"] = {"docker_flake_in_turns": flaky}
+            raise AgentError(f"Docker refused the agent's console in turn(s) {flaky}")
         if bad:
             record["error"] = {"turns": bad, "stderr": [_scrub(turns[i - 1].stderr[-800:]) for i in bad],
                                "result": [_scrub(turns[i - 1].result_text[-800:]) for i in bad]}
