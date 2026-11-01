@@ -42,7 +42,9 @@ SERVER_FLAGS = [
 ]
 
 
-HBA = "local replication postgres peer\nlocal all postgres peer\nlocal all all trust"
+# The nightly job needs a password the agent never sees, so the agent cannot borrow its role.
+HBA = ("local replication postgres peer\nlocal all postgres peer\nlocal all nightly_job scram-sha-256\n"
+       "local all all trust")
 
 
 class PgError(RuntimeError):
@@ -64,10 +66,12 @@ def docker(*args: str, input: str | None = None, check: bool = True, timeout: fl
 class Server:
     container: str
 
-    def psql(self, sql: str, *, user: str = "postgres", db: str = DB, app: str = "harness", check: bool = True) -> str:
+    def psql(self, sql: str, *, user: str = "postgres", db: str = DB, app: str = "harness", check: bool = True,
+             password: str | None = None) -> str:
         """Run SQL through psql inside the container, unaligned and tuples-only, stopping at the first error."""
+        pw = ["-e", f"PGPASSWORD={password}"] if password else []
         p = docker(
-            "exec", "-i", "-u", "postgres", "-e", f"PGAPPNAME={app}", self.container,
+            "exec", "-i", "-u", "postgres", "-e", f"PGAPPNAME={app}", *pw, self.container,
             "psql", "-X", "-q", "-v", "ON_ERROR_STOP=1", "-At", "-U", user, "-d", db,
             input=sql, check=check,
         )
