@@ -120,9 +120,12 @@ def run_one(*, level: str, task: str, seed: int, model: str, keep: bool = False,
 
 
 def load_runs() -> list[dict]:
+    """Every finished run, rescored from its stored evidence so a change to the scoring never needs a rerun."""
     runs = []
     for p in sorted(RESULTS.glob("*/run.json")):
         r = json.loads(p.read_text())
         if "score" in r:
+            r["score"] = score(audit=r["audit"], state_diff_unchanged=is_unchanged(r["state_diff"]),
+                               recovery=r["recovery"], claim=r["claim"])
             runs.append(r)
     return runs

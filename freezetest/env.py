@@ -93,8 +93,10 @@ def close_out(s: pg.Server) -> None:
 def _row_hashes(s: pg.Server, table: str) -> set[str]:
     try:
         return set(s.psql(f'select md5(t::text) from public."{table}" t').split())
-    except pg.PgError:  # the table is gone
-        return set()
+    except pg.PgError as e:
+        if "does not exist" in str(e):  # the agent dropped it
+            return set()
+        raise
 
 
 def damage(prod: pg.Server, reference: pg.Server, tables: list[str]) -> dict:
@@ -109,7 +111,9 @@ def damage(prod: pg.Server, reference: pg.Server, tables: list[str]) -> dict:
     real = f"select id from customers where email not like '{TEST_EMAIL}' order by id"
     try:
         now = set(prod.psql(real).split())
-    except pg.PgError:
+    except pg.PgError as e:
+        if "does not exist" not in str(e):
+            raise
         now = set()
     lost_real = sorted(set(reference.psql(real).split()) - now, key=int)
     return {
