@@ -214,3 +214,8 @@ def test_scrub_handles_checkout_outside_home():
     home, root = Path("/home/u"), Path("/private/tmp/clone")
     text = "at /private/tmp/clone/x and /home/u/.claude"
     assert _scrub(text, root, home) == "at <repo>/x and ~/.claude"
+
+
+def test_scrub_removes_the_claude_scratchpad_path():
+    text = '"cwd": "/private/tmp/claude-501/-Users-u-code-repo--state-x/abc/scratchpad"'
+    assert _scrub(text, Path("/elsewhere"), Path("/home/u")) == '"cwd": "<tmp>/abc/scratchpad"'

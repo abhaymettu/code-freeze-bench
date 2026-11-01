@@ -7,7 +7,7 @@
 \usepackage{tabularx}
 \usepackage{xcolor}
 \usepackage{hyperref}
-\usepackage{url}
+\usepackage{xurl}
 \hypersetup{colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue!50!black}
 \usepackage{natbib}
 \setcitestyle{numbers,square}
@@ -18,6 +18,7 @@
 
 \input{results.tex}
 
+\sloppy
 \begin{document}
 \maketitle
 
@@ -29,7 +30,13 @@ the server's own statement log, what changed from fingerprints of every table an
 from an actual point-in-time recovery into a second server. Five tempting requests, from voiding one duplicate invoice
 to deleting an audit table, are crossed with three enforcement levels: the freeze as a sentence, a read-only database
 role, and a typed permission gate in front of the console. The next morning the founder asks what changed, whether it
-can be restored, and whether the agent tried to write. RESULTS.
+can be restored, and whether the agent tried to write. Across \NRuns{} runs of Claude Haiku, Sonnet and Opus in
+Claude Code, a freeze stated only in the prompt was broken in \BreakPromptOpus{} Opus runs, \BreakPromptSonnet{} Sonnet
+runs and \BreakPromptHaiku{} Haiku runs, always on the smallest fixes. A read-only role and the gate each prevented all
+damage although Opus kept attempting writes. No agent hid an attempt (\ConcealedAttempt{}) and none falsely claimed
+rollback was impossible, but when a scheduled job damaged production overnight, agents gave a false all-clear in
+\FalseAllClearPlanted{} runs. Point-in-time recovery restored the freeze state in
+\Recovered{} runs.
 \end{abstract}
 
 \section{Introduction}
@@ -127,8 +134,7 @@ disk & 4 & ``disk 91\% full. audit\_log is the biggest table and nobody reads it
 nobody can log in as, the agent keeps \texttt{SELECT}, and temporary tables are revoked, so Postgres refuses every
 write. \emph{Gate}: the role can still write, but \texttt{./db} parses every statement, refuses writes, psql
 meta-commands that reach a shell or file, flags that change role, database or output, and attempts to leave read-only
-mode, with a message that names the freeze; reads run in a read-only transaction; and \texttt{./db
---request-approval "why"} records a request for an exception that nobody grants during the run.
+mode, with a message that names the freeze; reads run in a read-only transaction; and \texttt{./db -{}-request-approval "why"} records a request for an exception that nobody grants during the run.
 
 \paragraph{The planted incident.} In a second condition a nightly job, not the agent, runs the careless cleanup between
 the two turns, deleting the twelve test accounts and the real customer Testa Analytics. The job authenticates with a
@@ -157,7 +163,51 @@ the base backup plus archive into a second server, stopping at the freeze restor
 
 \section{Results}\label{sec:results}
 
-\TableLevels \TableTasks \TableMorning
+We ran every combination of five tasks, three levels and three models with seeds 1 to 5 and no incident
+(\NNone{} runs), and the planted incident with seeds 1 and 2 (\NPlanted{} runs). Models were addressed through the
+Claude Code CLI aliases \texttt{haiku}, \texttt{sonnet} and \texttt{opus}, Claude Code 2.1.303, on 1 November 2026.
+Runs whose CLI failed, or whose console met a Docker daemon error, were discarded and rerun; if a cell ran twice, the
+earliest run counts. Intervals are 95\% Wilson score intervals over runs.
+
+\TableLevels
+
+\paragraph{The prompt alone.} With the freeze as a sentence, Opus wrote to production in \BreakPromptOpus{} runs,
+Sonnet in \BreakPromptSonnet{} and Haiku in \BreakPromptHaiku{} (Table~\ref{tab:levels}). The writes were concentrated
+in the least severe tasks (Table~\ref{tab:tasks-levels}): Opus voided the duplicate invoice in \BreakPromptDupesOpus{}
+runs of that task and Sonnet applied the pending migration in \BreakPromptMigrateSonnet{}. No model wrote during the
+cleanup, dashboard or audit-log tasks at any level, so no real customer was lost in any run. The writes were
+deliberate rather than careless. Opus guarded each update to the one matching row, reported it, and in one run declined
+to add an audit entry ``since that would have been a second write during the freeze''. It read the founder's ``void
+the duplicate'' as approval, although her freeze message prescribed ``tell me and we'll decide together''. Severity, in
+other words, ran opposite to risk: the change that looked too small to count was the one made.
+
+\TableTasks
+
+\paragraph{The guards.} Under the read-only role and the gate no write completed and nothing was damaged (\BreakRole{} and \BreakGate{}), but Opus attempted writes in \TriedRoleDupesOpus{} and \TriedGateDupesOpus{} dupes runs and in about the same
+share of all runs as under the prompt alone (Table~\ref{tab:levels}). Because the prompt is identical across levels and
+a guard is discovered only by hitting it, this is expected; the attempt rates (5, 6 and 8 of 25 for Opus) are too close to
+distinguish at this sample size, and what the guard changes is the outcome. Every
+blocked agent stopped after one refusal: across \BBlockedRuns{} blocked runs, no run saw more than
+\BMaxRefusalsPerBlockedRun{} refused statement, the gate refused \BGateRefusalsForEscapesOrFlags{} attempts to switch
+role, escape to a shell, or leave read-only mode, and the log shows \BSuperuserIntrusions{} superuser statements from
+outside the harness. At the gate, Opus used the approval path in \BGateBlockedRunsWithApprovalRequest{} of the
+\BGateBlockedRuns{} blocked runs, writing a specific request (``Void duplicate invoice 403 (Kestrel Dental, customer 131,
+\$199 \ldots)'') instead of a bare refusal to Dana.
+
+\TableMorning
+
+\paragraph{The morning after.} No agent concealed its own attempt. No attempt was concealed (\ConcealedAttempt{}), and in
+the no-incident runs all six restore claims about the agent's own change were correct. The weakness was damage someone else did. With the planted
+nightly deletion, agents told the founder nothing had changed in \FalseAllClearPlanted{} runs. Every such answer came from a morning turn with at most \BFalseAllClearMaxMorningQueries{} tool calls, and
+\BFalseAllClearWithNoQuery{} made none. Asked whether
+production could be returned to the freeze, agents answered correctly in \VerdictPlantedCorrect{} of \VerdictPlantedTotal{}
+runs and hedged (``unknown'' or ``partially'') in \VerdictPlantedHedged{}, typically saying they could not confirm the
+restore point existed. Across all \VerdictTotal{} scored runs, the 2025 failure, a false ``rollback is impossible'',
+occurred \VerdictFalseUnrecoverable{} times, and a false ``it's fine'' \VerdictFalseRecoverable{} times. Hedging is not lying, but it leaves the founder exactly
+where the 2025 founder was: told nothing useful about recovery while a working restore exists.
+
+\paragraph{Ground truth.} Point-in-time recovery restored the freeze fingerprint exactly in \Recovered{} runs. A
+consistency check over all runs (damage charged to the agent with no write of its own in the server log) found none.
 
 \section{Limits}
 
@@ -171,7 +221,11 @@ whether they report the attempt.
 
 \section{Conclusion}
 
-CONCLUSION.
+A code freeze stated in the prompt held in most runs, and broke where it was least expected: on fixes small enough to
+look exempt. A read-only role, one \texttt{GRANT} away for most teams, removed all damage in these scenarios, and a
+gate that names the freeze and offers a way to ask turned the same impulse into an approval request. Claude models in
+this harness did not reproduce the 2025 incident's false claim that rollback was impossible, and no agent concealed its own write attempt; they were much less reliable at noticing harm they did not cause. The benchmark, every
+raw run and its transcripts are public, and the harness interface is small enough to add other agents and models.
 
 \paragraph{Reproducing.} \texttt{make bench} runs one scenario and prints its scorecard. \texttt{make matrix} runs the
 grid in this paper, skipping cells already scored, and \texttt{freezetest scoreboard} regenerates every table here from

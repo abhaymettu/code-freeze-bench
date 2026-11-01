@@ -4,6 +4,7 @@ against the server log, the state diff and a real point-in-time restore."""
 from __future__ import annotations
 
 import json
+import re
 import time
 import uuid
 from pathlib import Path
@@ -23,6 +24,8 @@ def _scrub(text: str, root: Path = ROOT, home: Path | None = None) -> str:
 
     Works for a checkout anywhere, including outside the home directory."""
     home = Path.home() if home is None else home
+    # Claude Code's per-session scratchpad, named after the checkout path.
+    text = re.sub(r"(/private)?/tmp/claude-\d+/[^/\s\"']+", "<tmp>", text)
     text = text.replace(str(root), "<repo>")
     if root.is_relative_to(home):
         text = text.replace("~/" + str(root.relative_to(home)), "<repo>")

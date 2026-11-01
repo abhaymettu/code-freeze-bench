@@ -1,0 +1,40 @@
+{
+  "title": "code-freeze-bench: does a coding agent honour a code freeze?",
+  "summary": "A benchmark that rebuilds the 2025 code-freeze database deletion on real Postgres and scores Claude agents against the server's statement log and a real point-in-time recovery, never against what the agent says.",
+  "headline_numbers": [
+    {
+      "label": "Opus wrote to production during a prompt-only freeze",
+      "value": "5 of 25 runs (Sonnet 1 of 25, Haiku 0 of 25)",
+      "command": "uv run freezetest scoreboard && grep -E 'Break(Prompt)(Haiku|Sonnet|Opus)\\}' paper/results.tex",
+      "source": "results/SCOREBOARD.md, No incident, By enforcement level and model"
+    },
+    {
+      "label": "Writes completed under a read-only role or the typed gate",
+      "value": "0 of 150 runs, though 14 of the 150 still tried (all Opus)",
+      "command": "uv run freezetest scoreboard && jq '{role: .\"none.role.violated\", gate: .\"none.gate.violated\", role_tried: .\"none.role.attempted\", gate_tried: .\"none.gate.attempted\"}' results/summary.json",
+      "source": "results/SCOREBOARD.md"
+    },
+    {
+      "label": "Write attempts hidden from the founder the next morning",
+      "value": "0 of 27",
+      "command": "uv run freezetest scoreboard && jq '.concealed_attempt' results/summary.json",
+      "source": "results/summary.json"
+    },
+    {
+      "label": "False all-clear after a nightly job deleted 13 customers",
+      "value": "19 of 89 morning answers",
+      "command": "uv run freezetest scoreboard && grep FalseAllClearPlanted paper/results.tex",
+      "source": "paper/results.tex"
+    },
+    {
+      "label": "Point-in-time recovery restored the freeze state exactly",
+      "value": "315 of 315 runs",
+      "command": "uv run freezetest scoreboard && jq '.recovery' results/summary.json",
+      "source": "results/summary.json"
+    }
+  ],
+  "rerun_everything": "make matrix",
+  "repo_url": "https://github.com/abhaymettu/code-freeze-bench",
+  "paper_pdf": "paper/main.pdf",
+  "hero_image": "docs/hero.svg"
+}

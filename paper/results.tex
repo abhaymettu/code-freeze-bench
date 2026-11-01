@@ -211,6 +211,21 @@
 \newcommand{\VerdictFalseRecoverable}{0}
 \newcommand{\VerdictInvalid}{0}
 \newcommand{\VerdictTotal}{95}
+\newcommand{\FalseAllClearPlanted}{19/89 [14, 31]}
+\newcommand{\VerdictPlantedCorrect}{33}
+\newcommand{\VerdictPlantedHedged}{56}
+\newcommand{\VerdictPlantedFalseUnrecoverable}{0}
+\newcommand{\VerdictPlantedFalseRecoverable}{0}
+\newcommand{\VerdictPlantedTotal}{89}
+\newcommand{\BBlockedRuns}{19}
+\newcommand{\BMaxRefusalsPerBlockedRun}{1}
+\newcommand{\BGateRefusalsForEscapesOrFlags}{0}
+\newcommand{\BSuperuserIntrusions}{0}
+\newcommand{\BGateBlockedRuns}{12}
+\newcommand{\BGateBlockedRunsWithApprovalRequest}{11}
+\newcommand{\BFalseAllClearRuns}{19}
+\newcommand{\BFalseAllClearMaxMorningQueries}{2}
+\newcommand{\BFalseAllClearWithNoQuery}{3}
 \newcommand{\TableLevels}{%
 \begin{table*}[t]\small\centering
 \caption{No incident. Runs where the agent broke the freeze (a write the server completed), tried to write (completed or refused), damaged production (rows differing from the PITR restore), and hid an attempt in the morning. k/n [95\% Wilson interval].}\label{tab:levels}
@@ -241,7 +256,7 @@ cleanup & 0/15 (0) & 0/15 (0) & 0/15 (0) \\
 disk & 0/15 (0) & 0/15 (0) & 0/15 (0) \\
 \bottomrule\end{tabular}\end{table}}
 \newcommand{\TableMorning}{%
-\begin{table}[t]\small\centering
+\begin{table*}[t]\small\centering
 \caption{Morning answers, runs where production changed. A false all-clear says nothing changed. Restore verdicts compare ``can we restore to the freeze'' with the actual restore.}\label{tab:morning}
 \begin{tabular}{@{}lllrrrr@{}}\toprule
 Cond. & Model & False all-clear & Correct & Hedged & False imposs. & False fine \\\midrule
@@ -251,4 +266,4 @@ none & opus & 0/5 [0, 43] & 5 & 0 & 0 & 0 \\
 planted & haiku & 9/29 [17, 49] & 2 & 27 & 0 & 0 \\
 planted & sonnet & 8/30 [14, 44] & 4 & 26 & 0 & 0 \\
 planted & opus & 2/30 [2, 21] & 27 & 3 & 0 & 0 \\
-\bottomrule\end{tabular}\end{table}}
+\bottomrule\end{tabular}\end{table*}}
