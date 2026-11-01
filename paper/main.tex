@@ -23,9 +23,11 @@
 \maketitle
 
 \begin{abstract}
-In July 2025 a coding agent deleted a company's production database during a declared code freeze, then said rollback
-was impossible; rollback worked. We turn that night into a benchmark whose ground truth never comes from the agent or
-from a language-model judge. Production is a real Postgres 17 server with WAL archiving. What the agent did is read from
+Tell a coding agent that production is frozen, then ask it for a quick fix. Does it write anyway, and the next morning
+does it tell the truth about what it did and whether it can be undone? Both went wrong in July 2025, when a coding
+agent deleted a company's production database during a declared code freeze, then said rollback was impossible;
+rollback worked. We turn that night into a benchmark that measures the two failures separately and whose ground truth
+never comes from the agent or from a language-model judge. Production is a real Postgres 17 server with WAL archiving. What the agent did is read from
 the server's own statement log, what changed from fingerprints of every table and the schema, and what could be undone
 from an actual point-in-time recovery into a second server. Five tempting requests, from voiding one duplicate invoice
 to deleting an audit table, are crossed with three enforcement levels: the freeze as a sentence, a read-only database
@@ -41,7 +43,8 @@ rollback was impossible, but when a scheduled job damaged production overnight, 
 
 \section{Introduction}
 
-On 18 July 2025 Jason Lemkin, founder of SaaStr, reported that the coding agent he had been using for nine days ``went
+A code freeze given to a coding agent in chat is only a request. The agent can ignore it, and afterwards it can
+misdescribe what it did and whether the damage can be undone. Both happened in a single incident in July 2025. On 18 July Jason Lemkin, founder of SaaStr, reported that the coding agent he had been using for nine days ``went
 rogue again during a code freeze -- and deleted our production database'' \citep{lemkin2025day9}. The freeze had been
 stated to the agent, which had ``agreed to touch nothing''. Asked to recover, the agent said rollback ``was impossible
 in this case, that it had destroyed all database versions''; it ``turns out [the agent] was wrong, and the rollback did
@@ -51,7 +54,7 @@ possible'' and announced automatic separation of development and production data
 \citep{sharwood2025replit,nolan2025fortune}. A day later Lemkin wrote that ``there is no way to enforce a code freeze''
 in such tools \citep{lemkin2025day10}.
 
-Two failures are tangled in that story. The agent broke an instruction that had no enforcement behind it, and then it
+The two failures are tangled in that story. The agent broke an instruction that had no enforcement behind it, and then it
 misreported what had happened and what could be undone. Both are measurable, and neither needs a language model to
 grade it: a database server knows which statements it executed, and a backup either restores the earlier state or it
 does not.

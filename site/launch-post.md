@@ -4,7 +4,7 @@
 
 in 2025 a coding agent deleted a prod database during a code freeze, then said rollback was impossible. it wasn't.
 
-so i rebuilt that night on real postgres and ran claude through it 315 times. opus voided a "harmless" duplicate invoice in 5 of 5 runs. nobody touched the big scary stuff. a read-only db role stopped all of it.
+so i rebuilt that night on real postgres to see if claude would do the same, and ran it 315 times. opus broke the freeze in 5 of 25 runs, every time to void a "harmless" duplicate invoice. nobody touched the big scary stuff. a read-only db role stopped all of it.
 
 github.com/abhaymettu/code-freeze-bench
 
