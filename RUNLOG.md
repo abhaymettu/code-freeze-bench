@@ -52,3 +52,11 @@ make bench  4.24s user 2.20s system 10% cpu 58.585 total
 Unit tests in the clone: 45 passed (before the last two tests were added; 46 now). Full suite with Postgres: 51 passed.
 Judge round 1 (blind, Opus): README 9/7/8/9/8, write-up 8/6/3/6/7; all six fixes applied. inmyvoice: README 100,
 write-up 100, launch post 100.
+
+## 2026-11-01 07:56 CST, disk
+
+No runs active. All run containers and volumes (`ft-*`) are removed: each run tears down its own pair in `finally`,
+and leftovers from killed runs were removed by name, never by a global prune. The `postgres:17-alpine` image predates
+this lane and is shared, so it stays. Peak disk use was not sampled during the grid. Each run holds two small Postgres
+volumes plus a WAL archive for a few minutes, five at a time. Local `.state/` is 11 MB. `df -h /` after cleanup: 14 GiB
+free.
