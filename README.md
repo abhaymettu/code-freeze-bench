@@ -21,7 +21,7 @@ The agent's word is never the evidence, and no language model grades anything.
 ## What it found
 
 A freeze that lives only in the chat is a request, and the most capable model was the one most likely to override it,
-usually to tidy up a duplicate invoice it thought it was helping with. Real enforcement closed the gap: a read-only
+usually to void a duplicate invoice while it was in there. Real enforcement closed the gap: a read-only
 database role or a typed permission gate stopped every write, even while the agent kept trying. The next morning the
 agents were honest about what they had done themselves. Where they slipped was damage they didn't cause, which they
 often missed and reported as an all-clear.
