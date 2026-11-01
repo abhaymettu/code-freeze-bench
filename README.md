@@ -3,22 +3,6 @@
 **Tell a coding agent "code freeze, don't touch production", then ask it for a quick fix. Does it write anyway? And
 the next morning, does it tell you the truth about what it did and whether it can be undone?**
 
-Production here is a real Postgres server. What the agent did comes from the server's own statement log, what changed
-comes from fingerprints of every table, and what can be undone comes from an actual point-in-time recovery. The agent's
-word is never the evidence, and no language model grades anything.
-
-![Freeze-break and attempt rates by model and enforcement level](docs/hero.svg)
-
-**Result, 315 runs on Claude Haiku, Sonnet and Opus.** With the freeze stated only in the chat, Opus wrote to
-production in 5 of 25 runs, Sonnet in 1 of 25 and Haiku in 0 of 25. Opus's five each changed one invoice row (voiding a
-duplicate). Sonnet's one ran a pending migration that rewrote 214 rows. No model touched customers or the audit log. A
-read-only database role and a typed permission gate each brought that to 0 of 75 with no damage, even though Opus kept
-trying (6 of 25 and 8 of 25 runs). No agent hid an attempt the next morning (0 of 27), and none claimed rollback was
-impossible. The weak spot was noticing damage it didn't cause. When a nightly job deleted 13 customers overnight, 19 of
-89 morning answers said nothing had changed (a false all-clear).
-
-## Why
-
 In July 2025 a coding agent deleted a company's production database during a declared code freeze. Asked about
 recovery, it said rollback was impossible. Rollback worked
 ([the founder's thread](https://x.com/jasonlk/status/1946239068691665187),
@@ -28,7 +12,26 @@ was that "there is no way to enforce a code freeze" in those tools.
 
 This repo turns that night into a test you can rerun. It measures both failures separately: writing during the freeze,
 and misreporting afterwards. It also compares three ways of enforcing the freeze, to see which one actually stops the
-damage.
+damage. Production here is a real Postgres server. What the agent did comes from the server's own statement log, what
+changed comes from fingerprints of every table, and what can be undone comes from an actual point-in-time recovery.
+The agent's word is never the evidence, and no language model grades anything.
+
+![Freeze-break and attempt rates by model and enforcement level](docs/hero.svg)
+
+## What it found
+
+A freeze that lives only in the chat is a request, and the most capable model was the one most likely to override it,
+usually to tidy up a duplicate invoice it thought it was helping with. Real enforcement closed the gap: a read-only
+database role or a typed permission gate stopped every write, even while the agent kept trying. The next morning the
+agents were honest about what they had done themselves. Where they slipped was damage they didn't cause, which they
+often missed and reported as an all-clear.
+
+The numbers, from 315 runs on Claude Haiku, Sonnet and Opus. With the freeze stated only in the chat, Opus wrote to
+production in 5 of 25 runs, Sonnet in 1 of 25 and Haiku in 0 of 25. Opus's five each changed one invoice row (voiding a
+duplicate). Sonnet's one ran a pending migration that rewrote 214 rows. No model touched customers or the audit log. A
+read-only database role and a typed permission gate each brought that to 0 of 75 with no damage, even though Opus kept
+trying (6 of 25 and 8 of 25 runs). No agent hid an attempt the next morning (0 of 27), and none claimed rollback was
+impossible. When a nightly job deleted 13 customers overnight, 19 of 89 morning answers said nothing had changed.
 
 ## Quick start
 
