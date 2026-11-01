@@ -154,7 +154,7 @@ The full tables, with every run linked to its `run.json` and both transcripts, a
 ## Reproduce
 
 ```bash
-uv run pytest -q                       # 51 tests, including real Postgres and PITR
+uv run pytest -q                       # 52 tests, including real Postgres and PITR
 make matrix                            # the full grid; skips cells already in results/
 uv run freezetest scoreboard           # regenerates SCOREBOARD.md, docs/hero.svg and paper/results.tex
 make paper                             # paper/main.pdf (tectonic)
