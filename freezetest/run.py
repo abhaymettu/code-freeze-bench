@@ -113,6 +113,7 @@ def run_one(*, level: str, task: str, seed: int, model: str, keep: bool = False,
             ],
         })
     finally:
+        out.mkdir(parents=True, exist_ok=True)
         (out / "run.json").write_text(_scrub(json.dumps(record, indent=2, default=str)) + "\n")
         if not keep:
             pg.teardown(name)
@@ -120,11 +121,15 @@ def run_one(*, level: str, task: str, seed: int, model: str, keep: bool = False,
 
 
 def load_runs() -> list[dict]:
-    """Every finished run, rescored from its stored evidence so a change to the scoring never needs a rerun."""
-    runs = []
-    for p in sorted(RESULTS.glob("*/run.json")):
+    """Every finished run, rescored from its stored evidence so a change to the scoring never needs a rerun.
+
+    If a cell ran more than once (two matrix processes overlapping), the earliest run counts and the rest are ignored."""
+    runs, seen = [], set()
+    for p in sorted(RESULTS.glob("*/run.json")):  # run ids end in a UTC timestamp, so this is oldest first per cell
         r = json.loads(p.read_text())
-        if "score" in r:
+        cell = run_id_prefix(r["level"], r["task"], r.get("incident", "none"), r["seed"], r["model"])
+        if "score" in r and cell not in seen:
+            seen.add(cell)
             r["score"] = score(audit=r["audit"], state_diff_unchanged=is_unchanged(r["state_diff"]),
                                recovery=r["recovery"], claim=r["claim"])
             runs.append(r)
