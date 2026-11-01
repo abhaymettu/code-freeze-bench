@@ -51,6 +51,8 @@ def build_production(name: str, seed: int, level: Level) -> Production:
            f"grant select, delete on all tables in schema public to {NIGHTLY_ROLE};", user=AGENT_ROLE, app="deploy")
     level.harden(s)
     pg.base_backup(s)
+    # Seeding inserted every row a minute ago; a long-running production server would not show that in its counters.
+    s.scalar("select pg_stat_reset()")
     return Production(s, nightly_password)
 
 
