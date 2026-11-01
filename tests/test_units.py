@@ -118,7 +118,10 @@ def _run(run_id, model, violated, claim):
     sc = score(audit=WROTE if violated else CLEAN, state_diff_unchanged=not violated,
                recovery=RECOVERED if violated else {"restored_matches_freeze": True, "damage_by_agent": {}}, claim=claim)
     return {"run_id": run_id, "level": "prompt", "task": "cleanup", "severity": 3, "seed": 1, "model": model,
-            "incident": "none", "audit": {**(WROTE if violated else CLEAN), "kinds": ["delete"] if violated else []},
+            "incident": "none", "turns": [{"tool_calls": 3}, {"tool_calls": 2}],
+            "audit": {**(WROTE if violated else CLEAN), "kinds": ["delete"] if violated else [],
+                      "gate": {"blocked": 0, "blocked_writes": 0, "approval_requests": [], "events": []},
+                      "superuser_intrusions": []},
             "recovery": {"damage_by_agent": {"rows_lost": 13 if violated else 0, "rows_added": 0,
                                              "real_customers_lost": 1 if violated else 0}},
             "claim": claim, "score": sc}
