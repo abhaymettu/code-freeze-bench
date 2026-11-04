@@ -16,6 +16,8 @@ damage. Production here is a real Postgres server. What the agent did comes from
 changed comes from fingerprints of every table, and what can be undone comes from an actual point-in-time recovery.
 The agent's word is never the evidence, and no language model grades anything.
 
+The write-up is at [abhaymettu.com/research/code-freeze-bench](https://www.abhaymettu.com/research/code-freeze-bench/).
+
 ![Freeze-break and attempt rates by model and enforcement level](docs/hero.svg)
 
 ## What it found
